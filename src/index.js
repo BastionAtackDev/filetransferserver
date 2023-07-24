@@ -1,37 +1,70 @@
 const express = require('express')
 const fs = require('fs')
-let files = fs.readdirSync('/home/sebastian/Fisiere')
+const path = require("path")
+let files = fs.readdirSync('./')
 let webpage = ``
-
+const options = {
+    root: "./"
+}
 function generateLinks(text){
     let links = ''
-    console.log(Object.keys(text).length)
+    // console.log(Object.keys(text).length)
     for (let i = 0; i < Object.keys(text).length; i++) {
-        console.log(i);
-        links = links + `<a href='/download/${text[i]}' download>${text[i]}</a>`
+        // console.log(i);
+        if (text[i].indexOf('.') > 0){
+            links = links + `<a href='/${text[i]}' download='${text[i]}'>${text[i]}</a><br>`
+        } else {
+            links = links + `<a href='/${text[i]}'>${text[i]}</a><br>`
+        }
     }
     return links
 }
-    
-function renderPage(){
-    files = fs.readdirSync('/home/sebastian/Fisiere')
-    webpage = `<!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>FileTranserServer</title>
-    </head>
-    <body>
-        <ul>
-            ${generateLinks(files)}
-        </ul>
-        </body>
-        </html>`
+ 
+// function generateLinks(text){
+//     let links = ''
+//     // console.log(Object.keys(text).length)
+//     for (let i = 0; i < Object.keys(text).length; i++) {
+//         // console.log(i);
+//         links = links + `<a href='/${text[i]}'>${text[i]}</a><br>`
+//     }
+//     return links
+// }
+function renderPage(paths){
+    files = fs.readdirSync(paths)
+        webpage = `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>FileTranserServer</title>
+        </head>
+        <body>
+            <ul>
+                ${generateLinks(files)}
+            </ul>
+            </body>
+            </html>`
         return webpage
-    }
+}
+// function renderFolderPage(paths){
+//     files = fs.readdirSync(paths)
+//         webpage = `<!DOCTYPE html>
+//         <html lang="en">
+//         <head>
+//         <meta charset="UTF-8">
+//         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//             <title>FileTranserServer</title>
+//         </head>
+//         <body>
+//             <ul>
+//                 ${generateFolderLinks(files)}
+//             </ul>
+//             </body>
+//             </html>`
+//         return webpage
+// }
 // function renderPage2(){
-//     files = fs.readdirSync('/home/sebastian/Fisiere')
+//     files = fs.readdirSync('./')
 //     webpage = `<!DOCTYPE html>
 //     <html lang="en">
 //     <head>
@@ -47,33 +80,45 @@ function renderPage(){
 // }
 
 // let index = ""
-console.log(files)
+// console.log(files)
 const app = express()
 const port = 3000
 
 app.get('/', (req,res) =>{
-    res.send(renderPage())
+    console.log("Main Page loaded")
+    res.send(renderPage("./"))
 })
-app.get('/download/:fileId', (req,res) =>{
-    fs.readFile(`/home/sebastian/Fisiere/${req.param("fileId")}`, 'utf8', (err, data) => {
+
+
+app.get('/:fileId', (req,res) =>{
+    fs.readFile(`./${req.params.fileId}`, 'utf8', (err, data) => {
         if (err) {
             // #TODO
-            // folderFiles = fs.readdirSync(`/home/sebastian/Fisiere/${req.param("fileId")}`)
+            // folderFiles = fs.readdirSync(`.//${req.params.fileId}`)
             // console.log(folderFiles)
             // res.send(renderPage("folderFiles"))
-            
-            console.log(err)
+            res.send(renderPage(`./${req.params.fileId}`))
+            console.log(`./${req.params.fileId}`)
             return;
         }
         // res.send(renderPage(data))
-        // res.send(data)
+        // console.log(data)
+        res.send(data)
+        res.sendFile(req.params.fileId,options,function (err){
+            if(err){
+                console.log(err)
+            }else{
+                console.log(`${req.params.fileId} has been downloaded`)
+                // console.log(req.params.fileId)
+            }
+        })
 
         // console.log(data)
     })
 })
 
 app.get('/test/:tagId', (req,res) =>{
-    res.send(req.param("tagId"))
+    res.send(req.params.tagId)
 })
 app.listen(port, () => {
     console.log(`App listening on port ${port}`)
